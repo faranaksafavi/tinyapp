@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
@@ -25,18 +27,18 @@
         <h5 class="card-title">Edit
         </h5>
 
-        <form class="form-inline d-flex justify-content-center text-center col-xs-4" method="POST" action="/urls/<%= shortURL %>/edit">
+        <form class="form-inline d-flex justify-content-center text-center col-xs-4" method="POST"
+          action="/urls/<%= shortURL %>/edit">
 
-            <label for="edit" class="mr-1 mb-1">New URL: </label>
-            <input type="text" class="col-md-4 text-center mr-1 mb-1"   value= <%= longURL %> name="edit" id="edit">
-            <button type="submit" class="btn  btn-primary mr-1 mb-1">Submit</button>
+          <label for="edit" class="mr-1 mb-1">New URL: </label>
+          <input type="text" class="col-md-4 text-center mr-1 mb-1" value=<%=longURL %> name="edit" id="edit">
+          <button type="submit" class="btn  btn-primary mr-1 mb-1">Submit</button>
 
         </form>
 
       </div>
       <div class="card-footer text-muted"></div>
     </div>
-
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
       integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"

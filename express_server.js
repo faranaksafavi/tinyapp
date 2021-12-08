@@ -1,5 +1,7 @@
 const express = require("express");
+var cookieParser = require('cookie-parser')
 const app = express();
+app.use(cookieParser());
 const PORT = 8080; // default port 8080
 
 function generateRandomString(len) {
@@ -35,29 +37,52 @@ app.get("/hello", (req, res) => {
   res.render("hello_world", templateVars);
 });
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  let username = req.cookies["username"];
+  let authenticated = false;
+  if (req.cookies["username"]) { authenticated = true;}
+  const templateVars = { urls: urlDatabase, authenticated :authenticated,username: username};
   res.render("urls_index", templateVars);
+  console.log(`url :${username}`);
 });
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
-});
-app.get("/urls/:shortURL", (req, res) => {
+  let username = req.cookies["username"];
+  let authenticated = false;
+  if (req.cookies["username"]) { authenticated = true;}
   const templateVars = {
+    username: username,
+    authenticated:authenticated,
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
+  res.render("urls_new", templateVars);
+});
+app.get("/urls/:shortURL", (req, res) => {
+  let username = req.cookies["username"];
+  let authenticated = false;
+  if (req.cookies["username"]) { authenticated = true;}
+  const templateVars = {
+    username: username,
+    authenticated:authenticated,
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+  };
+  console.log(`get show_me username :${username}`);
   res.render("urls_show", templateVars);
 });
 app.post("/urls", (req, res) => {
+  let username = req.cookies["username"];
+  let authenticated = false;
+  if (req.cookies["username"]) { authenticated = true;}
   let short = generateRandomString(6);
   urlDatabase[short] = req.body["longURL"];
-  console.log(req.body); // Log the POST request body to the console
   const templateVars = {
     shortURL: short,
     longURL: urlDatabase[req.params.shortURL],
+    username: username,
+    authenticated:authenticated,
   };
+  console.log(`post new username :${username}`);
   res.render("urls_show", templateVars);
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 app.get("/u/:shortURL", (req, res) => {
   console.log(`:::${req.params.shortURL}`);
@@ -67,18 +92,19 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
-  console.log(req.body); // Log the POST request body to the console
-
   res.redirect("/urls");
-  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 app.post("/urls/:shortURL/edit", (req, res) => {
-
-  const longUrl = urlDatabase[req.params.shortURL];
-  console.log(`long: ${longUrl}`); // Log the POST request body to the
   urlDatabase[req.params.shortURL]=req.body.edit;
-  console.log(`db: ${Object.values(urlDatabase)}`); // Log
-
-  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
   res.redirect(`/urls/${req.params.shortURL}`);
+});
+app.post("/login", (req, res) => {
+  res.cookie("username", req.body.username);
+ // console.log(`login: ${req.body}`);
+ // console.log(`coockies: ${JSON.stringify(req.cookies)}`);
+  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  let authenticated = false;
+  if (req.cookies["username"]){ authenticated = true;}
+
+  res.redirect("/urls");
 });
