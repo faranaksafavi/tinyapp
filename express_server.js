@@ -70,5 +70,15 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
 
   res.redirect("/urls");
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
+});
+app.post("/urls/:shortURL/edit", (req, res) => {
+
+  const longUrl = urlDatabase[req.params.shortURL];
+  console.log(`long: ${longUrl}`); // Log the POST request body to the
+  urlDatabase[req.params.shortURL]=req.body.edit;
+  console.log(`db: ${Object.values(urlDatabase)}`); // Log
+
+  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  res.redirect(`/urls/${req.params.shortURL}`);
 });
