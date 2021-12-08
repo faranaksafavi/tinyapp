@@ -36,14 +36,16 @@ app.get("/hello", (req, res) => {
   const templateVars = { greeting: "Hello World!" };
   res.render("hello_world", templateVars);
 });
+// render url_index
 app.get("/urls", (req, res) => {
   let username = req.cookies["username"];
   let authenticated = false;
   if (req.cookies["username"]) { authenticated = true;}
   const templateVars = { urls: urlDatabase, authenticated :authenticated,username: username};
   res.render("urls_index", templateVars);
-  console.log(`url :${username}`);
+
 });
+//redirect /urls_new
 app.get("/urls/new", (req, res) => {
   let username = req.cookies["username"];
   let authenticated = false;
@@ -56,6 +58,7 @@ app.get("/urls/new", (req, res) => {
   };
   res.render("urls_new", templateVars);
 });
+//render url_show
 app.get("/urls/:shortURL", (req, res) => {
   let username = req.cookies["username"];
   let authenticated = false;
@@ -69,6 +72,7 @@ app.get("/urls/:shortURL", (req, res) => {
   console.log(`get show_me username :${username}`);
   res.render("urls_show", templateVars);
 });
+//render url_show
 app.post("/urls", (req, res) => {
   let username = req.cookies["username"];
   let authenticated = false;
@@ -84,27 +88,30 @@ app.post("/urls", (req, res) => {
   console.log(`post new username :${username}`);
   res.render("urls_show", templateVars);
 });
+//redirect /urls/longurl
 app.get("/u/:shortURL", (req, res) => {
   console.log(`:::${req.params.shortURL}`);
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
-
+//redirect /urls
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
+//redirect /urls/shortUrl
 app.post("/urls/:shortURL/edit", (req, res) => {
   urlDatabase[req.params.shortURL]=req.body.edit;
   res.redirect(`/urls/${req.params.shortURL}`);
 });
+//redirect /urls
 app.post("/login", (req, res) => {
   res.cookie("username", req.body.username);
- // console.log(`login: ${req.body}`);
- // console.log(`coockies: ${JSON.stringify(req.cookies)}`);
-  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
-  let authenticated = false;
-  if (req.cookies["username"]){ authenticated = true;}
-
+  res.redirect("/urls");
+});
+//redirect /urls
+app.post("/logout", (req, res) => {
+  res.cookie("username", req.body.username);
+  res.clearCookie("username");
   res.redirect("/urls");
 });
