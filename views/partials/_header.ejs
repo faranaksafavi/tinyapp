@@ -1,46 +1,30 @@
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-toggle="collapse"
-      data-target="#navbarNavAltMarkup"
-      aria-controls="navbarNavAltMarkup"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
+      aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse d-flex"  id="navbarNavAltMarkup">
+    <div class="collapse navbar-collapse d-flex" id="navbarNavAltMarkup">
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
-      </div>
-      <div class="collapse navbar-collapse d-flex"  id="navbarNavAltMarkup"></div>
-      <div class="flex-row-reverse navbar-nav navbar-right d-flex justify-content-end mr-auto">
-        <% if(authenticated){ %>
-        <form
-          class="form-inline d-flex justify-content-end"
-          method="POST"
-          action="/logout"
-        >
+    </div>
+    <div class="collapse navbar-collapse d-flex" id="navbarNavAltMarkup"></div>
+    <div class="flex-row-reverse navbar-nav navbar-right d-flex justify-content-end mr-auto">
+      <% if(authenticated){ %>
+        <div class="form-inline d-flex justify-content-end">
           <label class="mr-1 mb-1">Logged In As: <%= username %></label>
           <a class="btn btn-primary mr-1 mb-1" href="/logout" role="button">Logout</a>
-        </form>
+        </div>
         <% }else{ %>
-        <form
-          class="form-inline d-flex justify-content-end col-xs-4"
-          method="POST"
-          action="/login"
-        >
-          <label  class="mr-1 mb-1">New URL: </label>
-          <a class="btn btn-primary mr-1 mb-1" href="/register" role="button">Signup</a>
-          <a class="btn btn-primary mr-1 mb-1" href="/login" role="button">Login</a>
-        </form>
-        <% } %>
-      </div>
+          <div class="form-inline d-flex justify-content-end col-xs-4" >
+            <a class="btn btn-primary mr-1 mb-1" href="/register" role="button">Register</a>
+            <a class="btn btn-primary mr-1 mb-1" href="/login" role="button">Login</a>
+          </div>
+          <% } %>
+    </div>
     </div>
   </nav>
 </header>
