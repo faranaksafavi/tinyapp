@@ -27,9 +27,7 @@
           action="/logout"
         >
           <label class="mr-1 mb-1">Logged In As: <%= username %></label>
-          <button type="submit" class="btn btn-primary mr-1 mb-1">
-            Logout
-          </button>
+          <a class="btn btn-primary mr-1 mb-1" href="/logout" role="button">Logout</a>
         </form>
         <% }else{ %>
         <form
@@ -37,14 +35,9 @@
           method="POST"
           action="/login"
         >
-          <label for="username" class="mr-1 mb-1">New URL: </label>
-          <input
-            type="text"
-            class="col-md-4 mr-1 mb-1"
-            placeholder="Username"
-            name="username"
-          />
-          <button type="submit" class="btn btn-primary mr-1 mb-1">Login</button>
+          <label  class="mr-1 mb-1">New URL: </label>
+          <a class="btn btn-primary mr-1 mb-1" href="/register" role="button">Signup</a>
+          <a class="btn btn-primary mr-1 mb-1" href="/login" role="button">Login</a>
         </form>
         <% } %>
       </div>

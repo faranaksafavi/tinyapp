@@ -11,15 +11,33 @@ function generateRandomString(len) {
   }
   return str;
 }
+function searchDb(key, db) {
+  let result = null;
+  for (const it in db) {
+    if (db[key]["username"] == key) {
+      result = it;
+      break;
+    }
+  }
+  return result;
+
+}
 
 app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
-
+// dbs
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
+const userDb = {
+  b2xVn2: {
+    username: "fara",
+  password: "867"},
+
+};
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -36,6 +54,8 @@ app.get("/hello", (req, res) => {
   const templateVars = { greeting: "Hello World!" };
   res.render("hello_world", templateVars);
 });
+
+
 // render url_index
 app.get("/urls", (req, res) => {
   let username = req.cookies["username"];
@@ -69,7 +89,6 @@ app.get("/urls/:shortURL", (req, res) => {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
-  console.log(`get show_me username :${username}`);
   res.render("urls_show", templateVars);
 });
 //render url_show
@@ -110,8 +129,61 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 //redirect /urls
+app.post("/register", (req, res) => {
+  let username = req.body["email"].toLowerCase();
+  let password = req.body["password"];
+
+  if (!searchDb(username, userDb)) {
+
+    userDb[generateRandomString(8)] = { username, password };
+    req.cookies["username"] = username;
+    const templateVars = { urls: urlDatabase, authenticated :true,username: username};
+    res.render("urls_index",templateVars)
+  } else {
+    let errors = "this email already exist"
+    const templateVars = { urls: urlDatabase, authenticated:false, errors: errors};
+    res.render("register",templateVars)
+  }
+});
+app.post("/login", (req, res) => {
+  let username = req.body["email"].toLowerCase();
+  let password = req.body["password"];
+
+  let user = searchDb(username, userDb);
+
+  if (!user) {
+    if (user[password] === password) {
+      req.cookies["username"] = username;
+      const templateVars = { urls: urlDatabase, authenticated :true,username: username};
+      res.render("urls_index",templateVars)
+    } else
+    {
+      let errors = "wrong username or password"
+      const templateVars = { urls: urlDatabase, authenticated:false, errors: errors};
+      res.render("register",templateVars)
+
+    }
+  } else {
+    let errors = "this email is not registered"
+    const templateVars = { urls: urlDatabase, authenticated:false, errors: errors};
+    res.render("register",templateVars)
+  }
+});
+app.get("/register", (req, res) => {
+
+  const templateVars = { urls: urlDatabase};
+  res.render("register",templateVars)
+
+});
+app.get("/login", (req, res) => {
+
+  const templateVars = { urls: urlDatabase};
+  res.render("login",templateVars)
+
+});
 app.post("/logout", (req, res) => {
-  res.cookie("username", req.body.username);
-  res.clearCookie("username");
-  res.redirect("/urls");
+
+  const templateVars = { urls: urlDatabase};
+  res.render("urls_index",templateVars)
+
 });
