@@ -102,8 +102,8 @@ app.get("/urls/:shortURL", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
-//render url_show
-app.post("/urls", (req, res) => {
+//after creatingrender url_show
+app.post("/newUrl", (req, res) => {
   let username = req.cookies["username"];
   let authenticated = false;
   if (req.cookies["username"]) { authenticated = true;}
@@ -126,7 +126,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 //redirect /urls
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
+  delete urlDatabase[req.params["shortURL"]] ;
   res.redirect("/urls");
 });
 //redirect /urls/shortUrl
@@ -151,7 +151,7 @@ app.post("/login", (req, res) => {
       req.cookies["username"] = username;
       const templateVars = { urls: urlDatabase, authenticated: true, username: username };
       console.log(`register username :${username}`);
-      res.render("urls_index",templateVars)
+      res.render("urls_index", templateVars);
     }
     else{
       let errors = "wrong username or password"
