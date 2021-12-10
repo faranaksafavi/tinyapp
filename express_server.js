@@ -8,13 +8,12 @@ function lowercase(st) {
   st.split("").forEach((char) => { ((/[A-Z]/).test(char)) ? result += char.toLowerCase() : result += char; });
   return result;
 };
-function searchDb(key, db) {
+function searchDb(value,keyInDb, db) {
   let result = null;
   for (const it in db) {
-    console.log(`db[it]["username"]: ${db[it]["username"]}`)
-    if (db[it]["username"] == key) {
+    console.log(`db[it][keyInDb]: ${db[it][keyInDb]}`)
+    if (db[it][keyInDb] == value) {
       result = db[it];
-
       break;
     }
   }
@@ -35,11 +34,16 @@ const urlDatabase = {
 };
 const userDb = {
   b2xVn2: {
-    a: "fara",
-  password: "867"},
+    id :"b2xVn2",
+    name: "fara",
+    password: "867",
+    urls: [],
+  },
   b: {
-    username: "pooyan",
-  password: "8234"},
+    id: "b",
+    name: "pooyan",
+    password: "8234",
+  urls: []},
 
 };
 
@@ -69,54 +73,100 @@ app.get("/hello", (req, res) => {
 
 // render url_index
 app.get("/urls", (req, res) => {
-  let username = req.cookies["username"];
+  let id = req.cookies["id"];
   let authenticated = false;
-  if (req.cookies["username"]) { authenticated = true;}
-  const templateVars = { urls: urlDatabase, authenticated :authenticated,username: username};
+  let user = null;
+  if (req.cookies["id"]) {
+    authenticated = true;
+    user=searchDb(id,"id", userDb)
+  }
+  const templateVars = { urls: urlDatabase, authenticated :authenticated,user: user};
   res.render("urls_index", templateVars);
 
 });
 //redirect /urls_new
 app.get("/urls/new", (req, res) => {
-  let username = req.cookies["username"];
+  let id = req.cookies["id"];
   let authenticated = false;
-  if (req.cookies["username"]) { authenticated = true;}
-  const templateVars = {
-    username: username,
-    authenticated:authenticated,
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-  };
-  res.render("urls_new", templateVars);
+  let user = null;
+  if (id) {
+    authenticated = true;
+    user=searchDb(id,"id", userDb)
+    const templateVars = {
+      user: user,
+      authenticated:authenticated,
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL],
+    };
+    res.render("urls_new", templateVars);
+  }
+  else {
+    let errors = "First you need to login"
+    const templateVars = { urls: urlDatabase , authenticated:false, errors: errors};
+    res.status(403).render("login",templateVars)
+  }
+
 });
 //render url_show
 app.get("/urls/:shortURL", (req, res) => {
-  let username = req.cookies["username"];
+  let id = req.cookies["id"];
   let authenticated = false;
-  if (req.cookies["username"]) { authenticated = true;}
-  const templateVars = {
-    username: username,
-    authenticated:authenticated,
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-  };
-  res.render("urls_show", templateVars);
+  let user = null;
+  const templateVars;
+  if (req.cookies["id"]) {
+    authenticated = true;
+    user = searchDb(id, "id", userDb)
+    if (user["urls"].includes(req.params.shortURL)) {
+      templateVars = {
+        user: user,
+        authenticated: authenticated,
+        shortURL: req.params.shortURL,
+        longURL: urlDatabase[req.params.shortURL],
+      };
+      res.render("urls_show", templateVars);
+
+    } else {
+      templateVars = {
+        errors = "this short name is not belong you ,you nead to create a new one",
+        user: user,
+        authenticated: authenticated,
+        shortURL: req.params.shortURL,
+        longURL: urlDatabase[req.params.shortURL],
+      }
+      res.render("urls_new", templateVars);
+    }
+  }
+  else {
+    templateVars = {
+      errors = "First you need to login",
+      authenticated: authenticated,
+    }
+    res.render("login", templateVars);
+  }
 });
 //after creatingrender url_show
 app.post("/newUrl", (req, res) => {
-  let username = req.cookies["username"];
+  let id = req.cookies["id"];
   let authenticated = false;
-  if (req.cookies["username"]) { authenticated = true;}
-  let short = generateRandomString(6);
-  urlDatabase[short] = req.body["longURL"];
-  const templateVars = {
-    shortURL: short,
-    longURL: urlDatabase[req.params.shortURL],
-    username: username,
-    authenticated:authenticated,
-  };
-  console.log(`post new username :${username}`);
-  res.render("urls_show", templateVars);
+  let user = null;
+  const templateVars;
+  if (req.cookies["id"]) {
+    authenticated = true;
+    user = searchDb(id, "id", userDb)
+    const templateVars = {
+      shortURL: short,
+      longURL: urlDatabase[req.params.shortURL],
+      user: user,
+      authenticated:authenticated,
+    };
+    res.render("urls_show", templateVars);
+  } else {
+    const templateVars = {
+      authenticated: authenticated,
+      errors : "First you need to login"
+    };
+    res.render("login", templateVars);
+  }
 });
 //redirect /urls/longurl
 app.get("/u/:shortURL", (req, res) => {
@@ -136,21 +186,13 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  console.log("i am in login state")
-  let email = req.body["email"];
-  let username  =lowercase(email);
-  let pass = req.body["password"];
-  let user = searchDb(username, userDb);
+  let user = searchDb(lowercase(req.body["email"]), "name", userDb)
   if (user) {
-   console.log(`user : ${Object.keys(user) }`)
-    console.log(`pass : ${pass}`);
-    let realPass = user["password"];
-    let logic = realPass === pass;
-    console.log(`logic: ${logic}`)
-    if (logic) {
-      req.cookies["username"] = username;
-      const templateVars = { urls: urlDatabase, authenticated: true, username: username };
-      console.log(`register username :${username}`);
+    if (user["password"]===req.body["password"]) {
+      req.cookies["id"] = user["id"];
+      const templateVars = {
+        urls: urlDatabase, authenticated: true, user: user
+      };
       res.render("urls_index", templateVars);
     }
     else{
@@ -163,7 +205,6 @@ app.post("/login", (req, res) => {
   else
   {
     let errors = "this email is not registered "
-    console.log(errors )
     const templateVars = { urls: urlDatabase, authenticated:false, errors: errors};
     res.render("login", templateVars);
   }
@@ -176,27 +217,25 @@ app.get("/login", (req, res) => {
 
 });
 app.get("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("id");
   const templateVars = { urls: urlDatabase, authenticated : false };
   res.status(200).render("urls_index",templateVars)
 });
 //redirect /urls
 app.post("/register", (req, res) => {
-  let email = req.body.email;
-  let username =lowercase(email) ;
+
+  let name =lowercase(req.body.email) ;
   let password = req.body["password"];
   let user =searchDb(username, userDb)
-  console.log(`user :${user}`);
   if (!user) {
+
     userDb[generateRandomString(8)] = { username, password };
     req.cookies["username"] = username;
     const templateVars = { urls: urlDatabase, authenticated: true, username: username };
-    console.log(`there is no ${username} ok to go`);
     res.render("urls_index",templateVars)
   } else {
     let errors = "this email already exist"
     const templateVars = { urls: urlDatabase, authenticated:false, errors: errors};
-    console.log(`error :${errors}`);
     res.render("register", templateVars)
   }
 });
