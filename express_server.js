@@ -1,5 +1,6 @@
 const express = require("express");
 var cookieParser = require('cookie-parser')
+const bcrypt = require('bcryptjs');
 const app = express();
 app.use(cookieParser());
 const PORT = 8080; // default port 8080
@@ -214,8 +215,9 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 app.post("/login", (req, res) => {
   let user = searchDb(lowercase(req.body["email"]), "name", userDb)
+  bcrypt.compareSync(req.body["password"], hashedPassword)
   if (user) {
-    if (user["password"]===req.body["password"]) {
+    if (bcrypt.compareSync(req.body["password"], hashedPassword)) {
       req.cookies["id"] = user["id"];
       const templateVars = {
         urls: urlDatabase, authenticated: true, user: user
@@ -253,10 +255,11 @@ app.post("/register", (req, res) => {
 
   let name =lowercase(req.body.email) ;
   let password = req.body["password"];
+  const hashedPassword = bcrypt.hashSync(password, 10);
   let user =searchDb(user,"name", userDb)
   if (!user) {
     id = generateRandomString(8);
-    userDb[id] = {id ,name, password };
+    userDb[id] = {id ,name, hashedPassword };
     req.cookies["id"] = id;
     const templateVars = { urls: urlDatabase, authenticated: true, user: user };
     res.render("urls_index",templateVars)
