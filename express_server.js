@@ -1,5 +1,5 @@
 const express = require("express");
-var cookieParser = require('cookie-parser')
+var cookieParser = require('cookie-session')
 const bcrypt = require('bcryptjs');
 const app = express();
 app.use(cookieParser());
@@ -30,21 +30,24 @@ function generateRandomString(len) {
   return str;
 }
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b2xVn2: {
+    id:b2xVn2,
+    longURL: "http://www.lighthouselabs.ca",
+    use_id:"b2xVn2"
+  }
+
 };
 const userDb = {
   b2xVn2: {
     id :"b2xVn2",
     name: "fara",
-    password: "867",
-    urls: [],
+    hashedPassword : bcrypt.hashSync(""),
   },
   b: {
     id: "b",
     name: "pooyan",
-    password: "8234",
-  urls: []},
+    phashedPassword : "8234",
+    },
 
 };
 
@@ -74,20 +77,26 @@ app.get("/hello", (req, res) => {
 
 // render url_index
 app.get("/urls", (req, res) => {
-  let id = req.cookies["id"];
+  let id = req.session["id"];
   let authenticated = false;
   let user = null;
-  if (req.cookies["id"]) {
+  let database = {};
+  if (id) {
     authenticated = true;
-    user=searchDb(id,"id", userDb)
+    user = searchDb(id, "id", userDb)
+    user["urls"].forEach((it) => {
+      let key = database[it][shortURL];
+      let value = database[it][longURL];
+      database[key] = value;
+    })
   }
-  const templateVars = { urls: urlDatabase, authenticated :authenticated,user: user};
+  const templateVars = { database, authenticated ,user};
   res.render("urls_index", templateVars);
 
 });
 //redirect /urls_new
 app.get("/urls/new", (req, res) => {
-  let id = req.cookies["id"];
+  let id = req.session["id"];
   let authenticated = false;
   let user = null;
   if (id) {
@@ -104,17 +113,17 @@ app.get("/urls/new", (req, res) => {
   else {
     let errors = "First you need to login"
     const templateVars = { urls: urlDatabase , authenticated:false, errors: errors};
-    res.status(403).render("login",templateVars)
+    res.render("login",templateVars)
   }
 
 });
 //render url_show
 app.get("/urls/:shortURL", (req, res) => {
-  let id = req.cookies["id"];
+  let id = req.session["id"];
   let authenticated = false;
   let user = null;
   let templateVars;
-  if (req.cookies["id"]) {
+  if (req.session["id"]) {
     authenticated = true;
     user = searchDb(id, "id", userDb)
     if (user["urls"].includes(req.params.shortURL)) {
@@ -147,11 +156,11 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 //after creatingrender url_show
 app.post("/newUrl", (req, res) => {
-  let id = req.cookies["id"];
+  let id = req.session["id"];
   let authenticated = false;
   let user = null;
   let templateVars;
-  if (req.cookies["id"]) {
+  if (req.session["id"]) {
     authenticated = true;
     user = searchDb(id, "id", userDb)
      templateVars = {
@@ -178,11 +187,11 @@ app.get("/u/:shortURL", (req, res) => {
 //redirect /urls
 app.post("/urls/:shortURL/delete", (req, res) => {
   let shortURL = req.params["shortURL"];
-  let id = req.cookies["id"];
+  let id = req.session["id"];
   let authenticated = false;
   let user = null;
   let templateVars;
-  if (req.cookies["id"]) {
+  if (req.session["id"]) {
     authenticated = true;
     user = searchDb(id, "id", userDb)
     if (user["urls"].includes(req.params.shortURL)) {
@@ -218,7 +227,7 @@ app.post("/login", (req, res) => {
   bcrypt.compareSync(req.body["password"], hashedPassword)
   if (user) {
     if (bcrypt.compareSync(req.body["password"], hashedPassword)) {
-      req.cookies["id"] = user["id"];
+      req.session["id"] = user["id"];
       const templateVars = {
         urls: urlDatabase, authenticated: true, user: user
       };
@@ -260,7 +269,7 @@ app.post("/register", (req, res) => {
   if (!user) {
     id = generateRandomString(8);
     userDb[id] = {id ,name, hashedPassword };
-    req.cookies["id"] = id;
+    req.session["id"] = id;
     const templateVars = { urls: urlDatabase, authenticated: true, user: user };
     res.render("urls_index",templateVars)
   } else {
@@ -285,4 +294,29 @@ app.get("/urls/:user['name']", (req, res) => {
   }
   const templateVars = { urls: database, authenticated :false, errors: errors ,user:user};
   res.render("myUrls",templateVars)
+});
+
+//new func
+//redirect /urls_new
+app.get("/urls/new", (req, res) => {
+  let id = req.session["id"];
+  let authenticated = false;
+  let user = null;
+  if (id) {
+    authenticated = true;
+    user=searchDb(id,"id", userDb)
+    const templateVars = {
+      user: user,
+      authenticated:authenticated,
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL],
+    };
+    res.render("urls_new", templateVars);
+  }
+  else {
+    let errors = "First you need to login"
+    const templateVars = { urls: urlDatabase , authenticated:false, errors: errors};
+    res.render("login",templateVars)
+  }
+
 });
