@@ -291,127 +291,73 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+  let help = new renderHelp();
   let user = searchDb(lowercase(req.body["email"]), "name", userDb);
-  bcrypt.compareSync(req.body["password"], hashedPassword);
   if (user) {
     if (bcrypt.compareSync(req.body["password"], hashedPassword)) {
       req.session["id"] = user["id"];
-      const templateVars = {
-        urls: urlDatabase,
-        authenticated: true,
-        user: user,
-      };
-      res.render("urls_index", templateVars);
+      help.setParams({ id: req.session["id"], db: userDb, renderOk: "urls_index" });
+      help.getOkResult();
     } else {
-      let errors = "wrong username or password";
-      console.log(errors);
-      const templateVars = {
-        urls: urlDatabase,
-        authenticated: false,
-        errors: errors,
-      };
-      res.render("login", templateVars);
+      help.setParams({ renderNo: "login" ,msgNo: "wrong username or password"});
+      help.getErrorResult();
     }
   } else {
-    let errors = "this email is not registered ";
-    const templateVars = {
-      urls: urlDatabase,
-      authenticated: false,
-      errors: errors,
-    };
-    res.render("login", templateVars);
+    help.setParams({ renderNo: "login" ,msgNo: "this email is not registered "});
+    help.getErrorResult();
   }
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = { urls: urlDatabase, authenticated: false, errors: "" };
-  res.status(403).render("login", templateVars);
+  let help = new renderHelp();
+  help.setParams({ renderNo: "login"});
+  help.getErrorResult();
 });
 app.get("/logout", (req, res) => {
   res.clearCookie("id");
-  const templateVars = { urls: urlDatabase, authenticated: false };
-  res.status(200).render("urls_index", templateVars);
+  let help = new renderHelp();
+  help.setParams({ renderNo: "urls_index"});
+  help.getErrorResult();
 });
 //redirect /urls
 app.post("/register", (req, res) => {
-  let name = lowercase(req.body.email);
-  let password = req.body["password"];
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  let user = searchDb(user, "name", userDb);
-  if (!user) {
+  let help = new renderHelp();
+  if (!searchDb(user, "name", userDb)) {
     id = generateRandomString(8);
-    userDb[id] = { id, name, hashedPassword };
+    let name = lowercase(req.body.email);
+    let password = req.body["password"];
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    let urls = [];
+    userDb[id] = { id, name, hashedPassword,urls };
     req.session["id"] = id;
-    const templateVars = { urls: urlDatabase, authenticated: true, user: user };
-    res.render("urls_index", templateVars);
+    help.setParams({ id: req.session["id"], db: userDb, renderOk: "urls_index" });
+    help.getOkResult();
   } else {
-    let errors = "this email already exist";
-    const templateVars = {
-      urls: urlDatabase,
-      authenticated: false,
-      errors: errors,
-    };
-    res.render("register", templateVars);
+    help.setParams({ renderNo: "register" ,msgNo: "First you need to login"});
+    help.getErrorResult();
   }
 });
 app.get("/register", (req, res) => {
-  let errors = "";
-  const templateVars = {
-    urls: urlDatabase,
-    authenticated: false,
-    errors: errors,
-  };
-  res.render("register", templateVars);
+  let help = new renderHelp();
+  help.setParams({ renderNo: "register"});
+  help.getErrorResult();
 });
 app.get("/urls/:user['name']", (req, res) => {
-  const id = urlDatabase[req.params.id];
-  let user = searchDb(req.params["id"], "id", userDb);
-  let errors = "";
-  let database = {};
-  if (user["urls"]) {
-    user["urls"].forEach((url) => {
-      database[url] = urlDatabase[url];
-    });
-  }
-  const templateVars = {
-    urls: database,
-    authenticated: false,
-    errors: errors,
-    user: user,
-  };
-  res.render("myUrls", templateVars);
+  let help = new renderHelp();
+  help.setParams({ id: req.session["id"], db: userDb, msgNo: "First you need to login", renderOk: "urls_new", renderNo: "login" });
+  help.getResult();
 });
-
 //new func
 //redirect /urls_new
 app.get("/urls/new", (req, res) => {
-  let help = new renderHelp({ id: req.session["id"], db: userDb, msgNo: "First you need to login", renderOk: "urls_new", renderNo: "login" });
+  let help = new renderHelp();
+  help.setParams({ id: req.session["id"], db: userDb, msgNo: "First you need to login", renderOk: "urls_new", renderNo: "login" });
+  help.getResult();
 
-  let id = req.session["id"];
-  let authenticated = false;
-  let user;
-  if (id) {
-    authenticated = true;
-    user = searchDb(id, "id", userDb);
-    const templateVars = {
-      user: user,
-      authenticated: authenticated,
-      shortURL: req.params.shortURL,
-      longURL: urlDatabase[req.params.shortURL],
-    };
-    res.render("urls_new", templateVars);
-  } else {
-    let errors = "First you need to login";
-    const templateVars = {
-      urls: urlDatabase,
-      authenticated: false,
-      errors: errors,
-    };
-    res.render("login", templateVars);
-  }
 });
 class renderHelp {
-  constructor({...myArgs}) {
+  constructor({ ...myArgs }) {
+    this.args= myArgs,
     this.keys = [
       "msgOk",
       "id",
@@ -425,32 +371,6 @@ class renderHelp {
       "key",
       "func",
     ];
-    let argKeys = Object.keys(myArgs);
-    for (let i = 0; i < 7; i++) {
-      if (argKeys.includes(keys[i])) {
-        this[keys[i]] = myArgs[keys[i]];
-      } else {
-        this[keys[i]] = "";
-      }
-    }
-    for (let i = 7; i < 9; i++) {
-      let argKeys = Object.keys(myArgs);
-      if (argKeys.includes(keys[i])) {
-        this[keys[i]] = myArgs[keys[i]];
-      } else {
-        this[keys[i]] = {};
-      }
-    }
-    if (argKeys.includes("key")) {
-      this.key = myArgs["key"];
-    } else {
-      this.key = "id";
-    }
-    if (argKeys.includes("func")) {
-      this.func = myArgs["func"];
-    } else {
-      this.func = searchDb;
-    }
   }
   findById(id_list, database) {
     let result = [];
@@ -458,6 +378,35 @@ class renderHelp {
     result.push(database[it])
     });
     return result;
+  };
+
+  setParams(arr) {
+    let argKeys = Object.keys(arr);
+    for (let i = 0; i < 7; i++) {
+      if (argKeys.includes(this.keys[i])) {
+        this[this.keys[i]] = arr[this.keys[i]];
+      } else {
+        this[this.keys[i]] = "";
+      }
+    };
+    for (let i = 7; i < 9; i++) {
+      if (argKeys.includes(this.keys[i])) {
+        this[this.keys[i]] = arr[this.keys[i]];
+      } else {
+        this[this.keys[i]] = {};
+      }
+    }
+    if (argKeys.includes("key")) {
+      this.key = arr["key"];
+    } else {
+      this.key = "id";
+    }
+    if (argKeys.includes("func")) {
+      this.func = arr["func"];
+    } else {
+      this.func = searchDb;
+    }
+
   }
   createParam() {
   let  result = {
@@ -468,18 +417,23 @@ class renderHelp {
       resultDb: this.resultDb,
     };
     return result;
+  };
+  getErrorResult() {
+    let params = this.createParam();
+    res.render(this.renderNo, params);
   }
-
-  result() {
-    if (id) {
-      this.authenticated = true;
-      this.user = func(this.id, this.key, this.db);
-      this.resultDb = this.findById(this.user["urls"], this.db);
-      let params = createParam();
-      res.render(this.renderOk, params);
+  getOkResult() {
+    this.authenticated = true;
+    this.user = func(this.id, this.key, this.db);
+    this.resultDb = this.findById(this.user["urls"], this.db);
+    let params = this.createParam();
+    res.render(this.renderOk, params);
+  }
+  getResult() {
+    if (this.id) {
+      this.getOkResult();
     } else {
-      let params = createParam();
-      res.render(this.renderNo, params);
+      this.getErrorResult();
     }
   }
 }
