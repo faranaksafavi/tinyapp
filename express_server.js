@@ -5,77 +5,83 @@ const app = express();
 app.use(cookieParser());
 const PORT = 8080; // default port 8080
 class renderHelp {
-  constructor({
-    id,
-    key,
-    db,
-    msgOk,
-    msgNo,
-    renderOk,
-    renderNo,
-    user,
-    func,
-    result,
-    authenticated,
-  }) {
-    this.keys = [
-      "msgOk",
-      "id",
-      "msgNo",
-      "renderOk",
-      "renderNo",
-      "user ",
-      "authenticated",
-      "db",
-      "resultDb",
-      "key",
-      "func",
-    ];
-    let argKeys = Object.keys(myArgs);
+  constructor({ ...myArgs }) {
+    (this.args = myArgs),
+      (this.keys = [
+        "msgOk",
+        "id",
+        "msgNo",
+        "renderOk",
+        "renderNo",
+        "user ",
+        "authenticated",
+        "db",
+        "resultDb",
+        "key",
+        "func",
+      ]);
+  }
+  findById(id_list, database) {
+    let result = [];
+    id_list.forEach((it) => {
+      result.push(database[it]);
+    });
+    return result;
+  }
+
+  setParams(arr) {
+    let argKeys = Object.keys(arr);
     for (let i = 0; i < 7; i++) {
-      if (argKeys.includes(keys[i])) {
-        this[keys[i]] = myArgs[keys[i]];
+      if (argKeys.includes(this.keys[i])) {
+        this[this.keys[i]] = arr[this.keys[i]];
       } else {
-        this[keys[i]] = "";
+        this[this.keys[i]] = "";
       }
     }
     for (let i = 7; i < 9; i++) {
-      let argKeys = Object.keys(myArgs);
-      if (argKeys.includes(keys[i])) {
-        this[keys[i]] = myArgs[keys[i]];
+      if (argKeys.includes(this.keys[i])) {
+        this[this.keys[i]] = arr[this.keys[i]];
       } else {
-        this[keys[i]] = {};
+        this[this.keys[i]] = {};
       }
     }
     if (argKeys.includes("key")) {
-      this.key = myArgs["key"];
+      this.key = arr["key"];
     } else {
       this.key = "id";
     }
     if (argKeys.includes("func")) {
-      this.func = myArgs["func"];
+      this.func = arr["func"];
     } else {
       this.func = searchDb;
     }
   }
-  result() {
-    if (id) {
-      authenticated = true;
-      user = func(id, key, db);
-      user["urls"].forEach((it) => {
-        let key = db[it][shortURL];
-        let value = db[it][longURL];
-        resultDb[key] = value;
-      });
-      result = {
-        user,
-        authenticated,
-        msgOk,
-        resultDb,
-      };
-      res.render(renderOk, result);
+  createParam() {
+    let result = {
+      user: this.user,
+      authenticated: this.authenticated,
+      msgOk: this.msgOk,
+      msgNo: this.msgNo,
+      resultDb: this.resultDb,
+    };
+    return result;
+  }
+  getErrorResult() {
+    let params = this.createParam();
+    res.render(this.renderNo, params);
+  }
+  getOkResult() {
+    this.authenticated = true;
+    this.user = func(this.id, this.key, this.db);
+    this.resultDb = this.findById(this.user["urls"], this.db);
+    let params = this.createParam();
+    res.render(this.renderOk, params);
+  }
+  getResult() {
+    if (this.id) {
+      this.getOkResult();
     } else {
-      res.render(renderNo, result);
+      this.getErrorResult();
     }
   }
 }
@@ -310,84 +316,3 @@ app.get("/urls/new", (req, res) => {
   });
   help.getResult();
 });
-class renderHelp {
-  constructor({ ...myArgs }) {
-    (this.args = myArgs),
-      (this.keys = [
-        "msgOk",
-        "id",
-        "msgNo",
-        "renderOk",
-        "renderNo",
-        "user ",
-        "authenticated",
-        "db",
-        "resultDb",
-        "key",
-        "func",
-      ]);
-  }
-  findById(id_list, database) {
-    let result = [];
-    id_list.forEach((it) => {
-      result.push(database[it]);
-    });
-    return result;
-  }
-
-  setParams(arr) {
-    let argKeys = Object.keys(arr);
-    for (let i = 0; i < 7; i++) {
-      if (argKeys.includes(this.keys[i])) {
-        this[this.keys[i]] = arr[this.keys[i]];
-      } else {
-        this[this.keys[i]] = "";
-      }
-    }
-    for (let i = 7; i < 9; i++) {
-      if (argKeys.includes(this.keys[i])) {
-        this[this.keys[i]] = arr[this.keys[i]];
-      } else {
-        this[this.keys[i]] = {};
-      }
-    }
-    if (argKeys.includes("key")) {
-      this.key = arr["key"];
-    } else {
-      this.key = "id";
-    }
-    if (argKeys.includes("func")) {
-      this.func = arr["func"];
-    } else {
-      this.func = searchDb;
-    }
-  }
-  createParam() {
-    let result = {
-      user: this.user,
-      authenticated: this.authenticated,
-      msgOk: this.msgOk,
-      msgNo: this.msgNo,
-      resultDb: this.resultDb,
-    };
-    return result;
-  }
-  getErrorResult() {
-    let params = this.createParam();
-    res.render(this.renderNo, params);
-  }
-  getOkResult() {
-    this.authenticated = true;
-    this.user = func(this.id, this.key, this.db);
-    this.resultDb = this.findById(this.user["urls"], this.db);
-    let params = this.createParam();
-    res.render(this.renderOk, params);
-  }
-  getResult() {
-    if (this.id) {
-      this.getOkResult();
-    } else {
-      this.getErrorResult();
-    }
-  }
-}
