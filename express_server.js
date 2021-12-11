@@ -1,31 +1,40 @@
 const express = require("express");
-var cookieParser = require("cookie-session");
+var cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const app = express();
-app.use(cookieParser());
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["key1", "key2"],
+  })
+);
 const PORT = 8080; // default port 8080
+app.set("view engine", "ejs");
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: true }));
+
 class renderHelp {
-  constructor({ ...myArgs }) {
-    (this.args = myArgs),
-      (this.keys = [
-        "msgOk",
-        "id",
-        "msgNo",
-        "renderOk",
-        "renderNo",
-        "user ",
-        "authenticated",
-        "db",
-        "resultDb",
-        "key",
-        "func",
-      ]);
+  constructor(res) {
+    this.res = res;
+    this.keys = [
+      "msgOk",
+      "id",
+      "msgNo",
+      "renderOk",
+      "renderNo",
+      "user ",
+      "authenticated",
+      "db",
+      "resultDb",
+      "key",
+      "func",
+    ];
   }
   findById(id_list, database) {
     let result = [];
-    id_list.forEach((it) => {
+ if(id_list.length > 0) {   id_list.forEach((it) => {
       result.push(database[it]);
-    });
+    });}
     return result;
   }
 
@@ -56,6 +65,7 @@ class renderHelp {
       this.func = searchDb;
     }
   }
+
   createParam() {
     let result = {
       user: this.user,
@@ -68,14 +78,21 @@ class renderHelp {
   }
   getErrorResult() {
     let params = this.createParam();
-    res.render(this.renderNo, params);
+    this.res.render(this.renderNo, params);
   }
   getOkResult() {
     this.authenticated = true;
-    this.user = func(this.id, this.key, this.db);
+
+    this.user = this.func(this.id, this.key, this.db);
+  /*   console.log(`user keys: ${Object.keys(this.user)}`);
+    console.log(`user value: ${Object.keys(this.value)}`);
+    console.log(`db keys: ${Object.keys(this.db)}`);
+    console.log(`db values: ${Object.values(this.db)}`);
+    console.log(`this id : ${this.id}`);
+    console.log(`this key : ${this.key}`); */
     this.resultDb = this.findById(this.user["urls"], this.db);
     let params = this.createParam();
-    res.render(this.renderOk, params);
+    this.res.render(this.renderOk, params);
   }
   getResult() {
     if (this.id) {
@@ -111,7 +128,7 @@ function generateRandomString(len) {
 }
 const urlDatabase = {
   b2xVn2: {
-    id: b2xVn2,
+    id: "b2xVn2",
     longURL: "http://www.lighthouselabs.ca",
     use_id: "b2xVn2",
   },
@@ -129,9 +146,6 @@ const userDb = {
   },
 };
 
-app.set("view engine", "ejs");
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({ extended: true }));
 // dbs
 
 app.get("/", (req, res) => {
@@ -152,33 +166,38 @@ app.get("/hello", (req, res) => {
 
 // render url_index
 app.get("/urls", (req, res) => {
-  let help = new renderHelp();
-  help.setParams({
-    id: req.session["id"],
-    db: userDb,
-    renderOk: "urls_index",
-    renderNo: "urls_index",
-  });
-  help.getResult();
+  let help = new renderHelp(res);
+  if (req.session["id"]) {
+    help.setParams({
+      id: req.session["id"],
+      db: userDb,
+      renderOk: "urls_index",
+    });
+    help.getOkResult;
+
+  }
+  else {
+    help.setParams({
+      renderNo: "urls_index",
+    });
+    help.getErrorResult();
+  }
 
 });
 //render url_show
 app.get("/urls/:shortURL", (req, res) => {
-  let help = new renderHelp();
+  let help = new renderHelp(res);
   let id = req.session["id"];
   if (req.session["id"]) {
     authenticated = true;
     user = searchDb(id, "id", userDb);
-    if (user["urls"].includes(req.params.shortURL)) {
-      help.setParams({
-        id: req.session["id"],
-        db: userDb,
-        renderOk: "urls_show",
-      });
-      help.getOkResult();
-    }
-  }
-  else {
+    help.setParams({
+      id: req.session["id"],
+      db: userDb,
+      renderOk: "urls_show",
+    });
+    help.getOkResult();
+  } else {
     help.setParams({
       msgNo: "First you need to login",
       renderNo: "login",
@@ -186,18 +205,7 @@ app.get("/urls/:shortURL", (req, res) => {
     help.getErrorResult();
   }
 });
-//after creatingrender url_show
-app.post("/newUrl", (req, res) => {
-  let help = new renderHelp();
-  help.setParams({
-    id: req.session["id"],
-    db: userDb,
-    msgNo: "First you need to login",
-    renderOk: "urls_show",
-    renderNo: "login",
-  });
-  help.getResult();
-});
+
 //redirect /urls/longurl
 app.get("/u/:shortURL", (req, res) => {
   console.log(`:::${req.params.shortURL}`);
@@ -206,14 +214,13 @@ app.get("/u/:shortURL", (req, res) => {
 });
 //redirect /urls
 app.post("/urls/:shortURL/delete", (req, res) => {
-  let help = new renderHelp();
+  let help = new renderHelp(res);
   if (req.session["id"]) {
     authenticated = true;
     user = searchDb(id, "id", userDb);
     delete urlDatabase[req.body["shortURL"]];
     res.redirect("/urls");
-  }
-  else {
+  } else {
     help.setParams({ renderNo: "login", msgNo: "First you need to login" });
     help.getErrorResult();
   }
@@ -227,10 +234,10 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  let help = new renderHelp();
+  let help = new renderHelp(res);
   let user = searchDb(lowercase(req.body["email"]), "name", userDb);
   if (user) {
-    if (bcrypt.compareSync(req.body["password"], hashedPassword)) {
+    if (bcrypt.compareSync(req.body["password"], user["hashedPassword"])) {
       req.session["id"] = user["id"];
       help.setParams({
         id: req.session["id"],
@@ -255,22 +262,22 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  let help = new renderHelp();
+  let help = new renderHelp(res);
   help.setParams({ renderNo: "login" });
   help.getErrorResult();
 });
 app.get("/logout", (req, res) => {
   res.clearCookie("id");
-  let help = new renderHelp();
+  let help = new renderHelp(res);
   help.setParams({ renderNo: "urls_index" });
   help.getErrorResult();
 });
 //redirect /urls
 app.post("/register", (req, res) => {
-  let help = new renderHelp();
-  if (!searchDb(user, "name", userDb)) {
+  let name = lowercase(req.body.email);
+  let help = new renderHelp(res);
+  if (!searchDb(name, "name", userDb)) {
     id = generateRandomString(8);
-    let name = lowercase(req.body.email);
     let password = req.body["password"];
     const hashedPassword = bcrypt.hashSync(password, 10);
     let urls = [];
@@ -283,17 +290,20 @@ app.post("/register", (req, res) => {
     });
     help.getOkResult();
   } else {
-    help.setParams({ renderNo: "register", msgNo: "First you need to login" });
+    help.setParams({
+      renderNo: "register",
+      msgNo: "this email already exists,please login! ",
+    });
     help.getErrorResult();
   }
 });
 app.get("/register", (req, res) => {
-  let help = new renderHelp();
+  let help = new renderHelp(res);
   help.setParams({ renderNo: "register" });
   help.getErrorResult();
 });
 app.get("/urls/:user['name']", (req, res) => {
-  let help = new renderHelp();
+  let help = new renderHelp(res);
   help.setParams({
     id: req.session["id"],
     db: userDb,
@@ -306,12 +316,45 @@ app.get("/urls/:user['name']", (req, res) => {
 //new func
 //redirect /urls_new
 app.get("/urls/new", (req, res) => {
-  let help = new renderHelp();
+  console.log("i am in /url/new");
+  let help = new renderHelp(res);
   help.setParams({
     id: req.session["id"],
     db: userDb,
     msgNo: "First you need to login",
     renderOk: "urls_new",
+    renderNo: "login",
+  });
+  help.getResult();
+});
+app.post("/urls/new", (req, res) => {
+  let help = new renderHelp(res);
+  if (req.session["id"]) {
+    user = searchDb(id, "id", userDb);
+    let key = generateRandomString(len);
+    urlDatabase[key] = { id: key, user_id: req.session["id"], longURL: req.body.longURL };
+    user.urls.push(key);
+    help.setParams({
+      id: req.session["id"],
+      db: userDb,
+      renderOk: "urls_index",
+    });
+    help.getOkResult();
+  } else {
+    help.setParams({ renderNo: "login", msgNo: "First you need to login" });
+    help.getErrorResult();
+  }
+});
+
+//check
+//after creatingrender url_show
+app.post("/newUrl", (req, res) => {
+  let help = new renderHelp(res);
+  help.setParams({
+    id: req.session["id"],
+    db: userDb,
+    msgNo: "First you need to login",
+    renderOk: "urls_show",
     renderNo: "login",
   });
   help.getResult();

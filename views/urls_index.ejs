@@ -9,6 +9,7 @@
   <title>TinyApp</title>
 </head>
 <body>
+
   <%- include('partials/_header') %>
   <main>
     <h3>My URLs</h3>
@@ -22,11 +23,12 @@
         </tr>
       </thead>
       <tbody>
-        <% for(let url of resultDb) { %>
+
+        <% if(resultDb.length > 0){ for(let url of resultDb) { %>
           <tr>
             <td><%= url["shortURL"] %></td>
             <td><%= url["longURL"] %></td>
-            <td><button type="submit" class="btn  btn-outline-primary mr-1 mb-1"><a href="/urls/<%= url["shortURL"] %>">Edit</a></button></td>
+            <td><button type="submit" class="btn  btn-outline-primary mr-1 mb-1"><a href="/urls/<%= url["shortURL"] %>/">Edit</a></button></td>
             <td>
               <form  method="POST" action="/urls/<%= url["shortURL"] %>/delete" >
                 <input type="hidden" name="shortURL"  value=<%= url["shortURL"] %>>
@@ -34,7 +36,7 @@
               </form>
             </td>
           </tr>
-        <% } %>
+        <% }} %>
       </tbody>
     </table>
   </main>
