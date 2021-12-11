@@ -18,9 +18,9 @@
       <h3 class=col-sm-4 >Register</h3>
       <form  action="/register" method="POST" >
         <div class="form-group  col-sm-4 ">
+          <small id="emailHelp" class="form-text text-danger"><%= msgNo %></small>
           <label for="email">Email address</label>
           <input type="email" class="form-control mb-2" id="email" name="email" aria-describedby="emailHelp" placeholder="Enter email">
-          <small id="emailHelp" class="form-text text-danger"><%= errors %></small>
           <label for="password">Password</label>
           <input type="password" class="form-control mb-2" id="password" name="password" placeholder="Password">
           <button type="submit" class="btn btn-primary ">Submit</button>

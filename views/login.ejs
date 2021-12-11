@@ -18,8 +18,8 @@
       <h3 class=col-sm-4 >Login</h3>
       <form action="/login" method="POST">
         <div class="form-group  col-sm-4 ">
+          <small id="emailHelp" class="form-text text-danger"><%= msgNo %></small>
           <label for="email">Email address</label>
-          <small id="emailHelp" class="form-text text-danger"><%= errors %></small>
           <input type="email" class="form-control mb-2" id="email" name="email" aria-describedby="emailHelp" placeholder="Enter email">
 
           <label for="password">Password</label>

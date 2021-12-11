@@ -15,10 +15,10 @@
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %>
+        <h5 class="card-title">TinyURL for: <%= resultDb["longURL"] %>
         </h5>
-        <p class="card-text">Short URL: <a href="/u/<%= shortURL %>">
-            <%= shortURL %>
+        <p class="card-text">Short URL: <a href="/u/<%= resultDb["shortURL"] %>">
+            <%= resultDb["shortURL"] %>
           </a></p>
       </div>
       <div class="card-footer text-muted"></div>
@@ -28,10 +28,10 @@
         </h5>
 
         <form class="form-inline d-flex justify-content-center text-center col-xs-4" method="POST"
-          action="/urls/<%= shortURL %>/edit">
+          action="/urls/<%= resultDb["shortURL"] %>/edit">
 
           <label for="edit" class="mr-1 mb-1">New URL: </label>
-          <input type="text" class="col-md-4 text-center mr-1 mb-1" placeholder="<%=longURL %>" name="edit" id="edit">
+          <input type="text" class="col-md-4 text-center mr-1 mb-1" placeholder="<%= resultDb["longURL"] %>" name="edit" id="edit">
           <button type="submit" class="btn  btn-primary mr-1 mb-1">Submit</button>
 
         </form>

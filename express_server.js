@@ -4,6 +4,81 @@ const bcrypt = require("bcryptjs");
 const app = express();
 app.use(cookieParser());
 const PORT = 8080; // default port 8080
+class renderHelp {
+  constructor({
+    id,
+    key,
+    db,
+    msgOk,
+    msgNo,
+    renderOk,
+    renderNo,
+    user,
+    func,
+    result,
+    authenticated,
+  }) {
+    this.keys = [
+      "msgOk",
+      "id",
+      "msgNo",
+      "renderOk",
+      "renderNo",
+      "user ",
+      "authenticated",
+      "db",
+      "resultDb",
+      "key",
+      "func",
+    ];
+    let argKeys = Object.keys(myArgs);
+    for (let i = 0; i < 7; i++) {
+      if (argKeys.includes(keys[i])) {
+        this[keys[i]] = myArgs[keys[i]];
+      } else {
+        this[keys[i]] = "";
+      }
+    }
+    for (let i = 7; i < 9; i++) {
+      let argKeys = Object.keys(myArgs);
+      if (argKeys.includes(keys[i])) {
+        this[keys[i]] = myArgs[keys[i]];
+      } else {
+        this[keys[i]] = {};
+      }
+    }
+    if (argKeys.includes("key")) {
+      this.key = myArgs["key"];
+    } else {
+      this.key = "id";
+    }
+    if (argKeys.includes("func")) {
+      this.func = myArgs["func"];
+    } else {
+      this.func = searchDb;
+    }
+  }
+  result() {
+    if (id) {
+      authenticated = true;
+      user = func(id, key, db);
+      user["urls"].forEach((it) => {
+        let key = db[it][shortURL];
+        let value = db[it][longURL];
+        resultDb[key] = value;
+      });
+      result = {
+        user,
+        authenticated,
+        msgOk,
+        resultDb,
+      };
+      res.render(renderOk, result);
+    } else {
+      res.render(renderNo, result);
+    }
+  }
+}
 function lowercase(st) {
   let result = "";
   st.split("").forEach((char) => {
@@ -310,20 +385,8 @@ app.get("/urls/:user['name']", (req, res) => {
 //new func
 //redirect /urls_new
 app.get("/urls/new", (req, res) => {
-  renderHelp(
-    req.session["id"],
-    (key = "id"),
-    (authenticated = false),
-    userDb,
-    (msgOk = ""),
-    (msgNo = ""),
-    (renderOk = ""),
-    (renderNo = ""),
-    (user = null),
-    (resultDb = {}),
-    (func = searchDb),
-    (result = { user, authenticated, msgNo, resultDb })
-  );
+  let help = new renderHelp({ id: req.session["id"], db: userDb, msgNo: "First you need to login", renderOk: "urls_new", renderNo: "login" });
+
   let id = req.session["id"];
   let authenticated = false;
   let user;
@@ -348,19 +411,7 @@ app.get("/urls/new", (req, res) => {
   }
 });
 class renderHelp {
-  constructor({
-    id,
-    key,
-    db,
-    msgOk,
-    msgNo,
-    renderOk,
-    renderNo,
-    user,
-    func,
-    result,
-    authenticated,
-  }) {
+  constructor({...myArgs}) {
     this.keys = [
       "msgOk",
       "id",
@@ -401,24 +452,34 @@ class renderHelp {
       this.func = searchDb;
     }
   }
+  findById(id_list, database) {
+    let result = [];
+    id_list.forEach((it) => {
+    result.push(database[it])
+    });
+    return result;
+  }
+  createParam() {
+  let  result = {
+      user: this.user,
+      authenticated:  this.authenticated,
+      msgOk: this.msgOk,
+      msgNo:  this.msgNo,
+      resultDb: this.resultDb,
+    };
+    return result;
+  }
+
   result() {
     if (id) {
-      authenticated = true;
-      user = func(id, key, db);
-      user["urls"].forEach((it) => {
-        let key = db[it][shortURL];
-        let value = db[it][longURL];
-        resultDb[key] = value;
-      });
-      result = {
-        user,
-        authenticated,
-        msgOk,
-        resultDb,
-      };
-      res.render(renderOk, result);
+      this.authenticated = true;
+      this.user = func(this.id, this.key, this.db);
+      this.resultDb = this.findById(this.user["urls"], this.db);
+      let params = createParam();
+      res.render(this.renderOk, params);
     } else {
-      res.render(renderNo, result);
+      let params = createParam();
+      res.render(this.renderNo, params);
     }
   }
 }
