@@ -28,13 +28,16 @@ class renderHelp {
       "resultDb",
       "key",
       "func",
+      "oneItem ",
     ];
   }
   findById(id_list, database) {
     let result = [];
- if(id_list.length > 0) {   id_list.forEach((it) => {
-      result.push(database[it]);
-    });}
+    if (id_list.length > 0) {
+      id_list.forEach((it) => {
+        result.push(database[it]);
+      });
+    }
     return result;
   }
 
@@ -51,7 +54,7 @@ class renderHelp {
       if (argKeys.includes(this.keys[i])) {
         this[this.keys[i]] = arr[this.keys[i]];
       } else {
-        this[this.keys[i]] = {};
+        this[this.keys[i]] = [];
       }
     }
     if (argKeys.includes("key")) {
@@ -64,6 +67,11 @@ class renderHelp {
     } else {
       this.func = searchDb;
     }
+    if (argKeys.includes("oneItem ")) {
+      this.oneItem = arr["oneItem "];
+    } else {
+      this.oneItem = [];
+    }
   }
 
   createParam() {
@@ -73,6 +81,7 @@ class renderHelp {
       msgOk: this.msgOk,
       msgNo: this.msgNo,
       resultDb: this.resultDb,
+      oneItem: this.oneItem,
     };
     return result;
   }
@@ -80,17 +89,22 @@ class renderHelp {
     let params = this.createParam();
     this.res.render(this.renderNo, params);
   }
+  addParam(x) {
+    this.oneItem = x;
+  }
   getOkResult() {
     this.authenticated = true;
 
     this.user = this.func(this.id, this.key, this.db);
-  /*   console.log(`user keys: ${Object.keys(this.user)}`);
-    console.log(`user value: ${Object.keys(this.value)}`);
-    console.log(`db keys: ${Object.keys(this.db)}`);
+    //console.log(`user keys: ${Object.keys(this.user)}`);
+    //console.log(`user value: ${Object.keys(this.value)}`);
+    /*    console.log(`db keys: ${Object.keys(this.db)}`);
     console.log(`db values: ${Object.values(this.db)}`);
     console.log(`this id : ${this.id}`);
     console.log(`this key : ${this.key}`); */
     this.resultDb = this.findById(this.user["urls"], this.db);
+    console.dir(`result db : ${Object.values(this.resultDb)}`);
+
     let params = this.createParam();
     this.res.render(this.renderOk, params);
   }
@@ -128,7 +142,7 @@ function generateRandomString(len) {
 }
 const urlDatabase = {
   b2xVn2: {
-    id: "b2xVn2",
+    shortURL: "b2xVn2",
     longURL: "http://www.lighthouselabs.ca",
     use_id: "b2xVn2",
   },
@@ -155,14 +169,6 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  const templateVars = { greeting: "Hello World!" };
-  res.render("hello_world", templateVars);
-});
 
 // render url_index
 app.get("/urls", (req, res) => {
@@ -174,24 +180,22 @@ app.get("/urls", (req, res) => {
       renderOk: "urls_index",
     });
     help.getOkResult;
-
-  }
-  else {
+  } else {
     help.setParams({
       renderNo: "urls_index",
     });
     help.getErrorResult();
   }
-
 });
 //render url_show
-app.get("/urls/:shortURL", (req, res) => {
+app.post("/urls/edit", (req, res) => {
   let help = new renderHelp(res);
   let id = req.session["id"];
   if (req.session["id"]) {
     authenticated = true;
     user = searchDb(id, "id", userDb);
     help.setParams({
+      oneItem: urlDatabase[req.body.shortURL],
       id: req.session["id"],
       db: userDb,
       renderOk: "urls_show",
@@ -208,12 +212,49 @@ app.get("/urls/:shortURL", (req, res) => {
 
 //redirect /urls/longurl
 app.get("/u/:shortURL", (req, res) => {
+  let help = new renderHelp(res);
+  let id = req.session["id"];
+  if (req.session["id"]) {
+    authenticated = true;
+    user = searchDb(id, "id", userDb);
+    if (user.urls.length > 0) {
+      if (user.urls.includes(req.params.shortURL)) {
+        help.setParams({
+          oneItem: urlDatabase[req.body.shortURL],
+          id: req.session["id"],
+          db: userDb,
+          renderOk: "urls_show",
+        });
+        help.getOkResult();
+      } else {
+        help.setParams({
+          msgNo: "there is not this url or it is belongs to another",
+          renderNo: "login",
+        });
+        help.getErrorResult();
+      }
+    }
+    else {
+      help.setParams({
+        msgNo: "there is not this url or it is belongs to another",
+        renderNo: "login",
+      });
+      help.getErrorResult();
+    }
+  } else {
+    help.setParams({
+      msgNo: "First you need to login",
+      renderNo: "login",
+    });
+    help.getErrorResult();
+  }
+
   console.log(`:::${req.params.shortURL}`);
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
 //redirect /urls
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.post("/urls/delete", (req, res) => {
   let help = new renderHelp(res);
   if (req.session["id"]) {
     authenticated = true;
@@ -226,10 +267,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 //redirect /urls/shortUrl
-app.post("/urls/:shortURL/edit", (req, res) => {
+app.post("/urls/edit/done", (req, res) => {
   if (req.session["id"]) {
+    console.dir(`in user edit done param val:${Object.values(req.params)}`);
     urlDatabase[req.params.shortURL] = req.body.edit;
-    res.redirect(`/urls/${req.params.shortURL}`);
+    res.redirect("/urls/edit");
   }
 });
 
@@ -302,21 +344,21 @@ app.get("/register", (req, res) => {
   help.setParams({ renderNo: "register" });
   help.getErrorResult();
 });
-app.get("/urls/:user['name']", (req, res) => {
+/* app.get("/urls/:shortURL", (req, res) => {
   let help = new renderHelp(res);
   help.setParams({
     id: req.session["id"],
     db: userDb,
     msgNo: "First you need to login",
-    renderOk: "urls_new",
+    renderOk: "urls_show",
     renderNo: "login",
   });
   help.getResult();
-});
+}); */
 //new func
 //redirect /urls_new
 app.get("/urls/new", (req, res) => {
-  console.log("i am in /url/new");
+  console.log("i am in url new");
   let help = new renderHelp(res);
   help.setParams({
     id: req.session["id"],
@@ -330,14 +372,20 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls/new", (req, res) => {
   let help = new renderHelp(res);
   if (req.session["id"]) {
-    user = searchDb(id, "id", userDb);
-    let key = generateRandomString(len);
-    urlDatabase[key] = { id: key, user_id: req.session["id"], longURL: req.body.longURL };
+    user = searchDb(req.session["id"], "id", userDb);
+    let key = generateRandomString(6);
+    urlDatabase[key] = {
+      id: key,
+      user_id: req.session["id"],
+      longURL: req.body.longURL,
+      shortURL: key,
+    };
     user.urls.push(key);
     help.setParams({
       id: req.session["id"],
       db: userDb,
       renderOk: "urls_index",
+      oneItem: urlDatabase[key],
     });
     help.getOkResult();
   } else {
