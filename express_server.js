@@ -24,7 +24,8 @@ class renderHelp {
       "renderNo",
       "user ",
       "authenticated",
-      "db",
+      "userDb",
+      "urlDb",
       "resultDb",
       "key",
       "func",
@@ -32,8 +33,19 @@ class renderHelp {
     ];
   }
   findById(id_list, database) {
+    console.log(`findbyid parame 1:${id_list}`)
+    console.log(`findbyid database keys:${Object.keys(database)}`)
+    let dbVal = Object.values(database);
+    for (let i of dbVal) {
+      console.log(`keys:${Object.keys(i)}`)
+      console.log(`values:${Object.values(i)}`)
+
+    }
+
     let result = [];
     if (id_list.length > 0) {
+
+
       id_list.forEach((it) => {
         result.push(database[it]);
       });
@@ -50,7 +62,7 @@ class renderHelp {
         this[this.keys[i]] = "";
       }
     }
-    for (let i = 7; i < 9; i++) {
+    for (let i = 7; i < 10; i++) {
       if (argKeys.includes(this.keys[i])) {
         this[this.keys[i]] = arr[this.keys[i]];
       } else {
@@ -95,14 +107,14 @@ class renderHelp {
   getOkResult() {
     this.authenticated = true;
 
-    this.user = this.func(this.id, this.key, this.db);
+    this.user = this.func(this.id, this.key, this.userDb);
     //console.log(`user keys: ${Object.keys(this.user)}`);
     //console.log(`user value: ${Object.keys(this.value)}`);
     /*    console.log(`db keys: ${Object.keys(this.db)}`);
     console.log(`db values: ${Object.values(this.db)}`);
     console.log(`this id : ${this.id}`);
     console.log(`this key : ${this.key}`); */
-    this.resultDb = this.findById(this.user["urls"], this.db);
+    this.resultDb = this.findById(this.user["urls"], this.urlDb);
     console.dir(`result db : ${Object.values(this.resultDb)}`);
 
     let params = this.createParam();
@@ -142,7 +154,7 @@ function generateRandomString(len) {
 }
 const urlDatabase = {
   b2xVn2: {
-    shortURL: "b2xVn2",
+    short: "b2xVn2",
     longURL: "http://www.lighthouselabs.ca",
     use_id: "b2xVn2",
   },
@@ -161,22 +173,27 @@ const userDb = {
 };
 
 // dbs
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
 
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
 // render url_index
 app.get("/urls", (req, res) => {
+  console.log(`req.session.isChanged: ${req.session.isChanged}`);
+  console.log(`req.session.isNew: ${req.session.isNew}`);
+  console.log(`req.session.isPopulated: ${req.session.isPopulated}`);
+  console.log(`req.sessionreq.sessionOptions: ${req.session.sessionOptions}`);
   let help = new renderHelp(res);
   if (req.session["id"]) {
     help.setParams({
       id: req.session["id"],
-      db: userDb,
+      userDb: userDb,
+      urlDb:urlDatabase,
       renderOk: "urls_index",
     });
     help.getOkResult;
@@ -197,7 +214,8 @@ app.post("/urls/edit", (req, res) => {
     help.setParams({
       oneItem: urlDatabase[req.body.shortURL],
       id: req.session["id"],
-      db: userDb,
+      userDb: userDb,
+      urlDb:urlDatabase,
       renderOk: "urls_show",
     });
     help.getOkResult();
@@ -222,7 +240,8 @@ app.get("/u/:shortURL", (req, res) => {
         help.setParams({
           oneItem: urlDatabase[req.body.shortURL],
           id: req.session["id"],
-          db: userDb,
+          userDb: userDb,
+          urlDb:urlDatabase,
           renderOk: "urls_show",
         });
         help.getOkResult();
@@ -283,7 +302,8 @@ app.post("/login", (req, res) => {
       req.session["id"] = user["id"];
       help.setParams({
         id: req.session["id"],
-        db: userDb,
+        userDb: userDb,
+        urlDb:urlDatabase,
         renderOk: "urls_index",
       });
       help.getOkResult();
@@ -309,10 +329,12 @@ app.get("/login", (req, res) => {
   help.getErrorResult();
 });
 app.get("/logout", (req, res) => {
-  res.clearCookie("id");
-  let help = new renderHelp(res);
+  req.session = null;
+  //res.clearCookie("id");
+ /*  let help = new renderHelp(res);
   help.setParams({ renderNo: "urls_index" });
-  help.getErrorResult();
+  help.getErrorResult(); */
+  res.redirect("/urls")
 });
 //redirect /urls
 app.post("/register", (req, res) => {
@@ -327,7 +349,8 @@ app.post("/register", (req, res) => {
     req.session["id"] = id;
     help.setParams({
       id: req.session["id"],
-      db: userDb,
+      userDb: userDb,
+      urlDb:urlDatabase,
       renderOk: "urls_index",
     });
     help.getOkResult();
@@ -362,7 +385,8 @@ app.get("/urls/new", (req, res) => {
   let help = new renderHelp(res);
   help.setParams({
     id: req.session["id"],
-    db: userDb,
+    userDb: userDb,
+    urlDb:urlDatabase,
     msgNo: "First you need to login",
     renderOk: "urls_new",
     renderNo: "login",
@@ -383,7 +407,8 @@ app.post("/urls/new", (req, res) => {
     user.urls.push(key);
     help.setParams({
       id: req.session["id"],
-      db: userDb,
+      userDb: userDb,
+      urlDb:urlDatabase,
       renderOk: "urls_index",
       oneItem: urlDatabase[key],
     });
@@ -400,7 +425,8 @@ app.post("/newUrl", (req, res) => {
   let help = new renderHelp(res);
   help.setParams({
     id: req.session["id"],
-    db: userDb,
+    userDb: userDb,
+    urlDb:urlDatabase,
     msgNo: "First you need to login",
     renderOk: "urls_show",
     renderNo: "login",
