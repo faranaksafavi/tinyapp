@@ -8,7 +8,6 @@
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <title>URL - TinyApp Example</title>
 </head>
-
 <body>
   <%- include('partials/_header') -%>
     <div class="card text-center">
@@ -18,21 +17,21 @@
           <h5 class="card-title">TinyURL for: <%= longURL %>
           </h5>
           <p class="card-text">Short URL :
-            <a href="<%= longURL %>"> <%= url_id %></a>
+            <a href="<%=longURL%>"> <%= url_id %></a>
           </p>
         </div>
         <div class="card-footer text-muted"></div>
         <div class="card-header"></div>
         <div class="card-body">
           <h5 class="card-title">Edit</h5>
-          <form class="form-inline d-flex justify-content-center text-center col-xs-4" method="POST" action="/urls/<%= url_id  %>">
+          <form action="/urls/<%=url_id%>" method="POST" class="form-inline d-flex justify-content-center  col-xs-4">
             <label for="edit" class="mr-1 mb-1">Edit URL: </label>
-            <input type="text" class="col-md-4 text-center mr-1 mb-1" placeholder="<%= longURL  %>" name="edit">
+            <input type="text" class="col-md-4 text-center mr-1 mb-1" placeholder="<%=longURL %>" name="edit">
             <button type="submit" class="btn  btn-primary mr-1 mb-1">Submit</button>
           </form>
         </div>
         <div class="card-footer text-muted"></div>
-        <% } %>
+        <%}%>
     </div>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
