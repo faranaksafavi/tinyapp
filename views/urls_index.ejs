@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
   <!-- Bootstrap CSS -->
+  <!-- #region -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+  <!-- endregion -->
   <title>TinyApp</title>
 </head>
 <body>
@@ -24,19 +26,16 @@
       </thead>
       <tbody>
 
-        <% if(resultDb.length > 0){ for(let url of resultDb) { %>
+        <% if(resultDb.length > 0){ for(let url of resultDb) {%>
           <tr>
             <td><%= url["shortURL"] %></td>
             <td><%= url["longURL"] %></td>
             <td>
-              <form  method="POST" action="/urls/edit" >
-                <input type="hidden" name="shortURL"  value=<%= url["shortURL"] %>>
-                <button type="submit" class="btn   btn-outline-primary  mr-1 mb-1">Edit</button>
-              </form>
+                <a class="nav-item nav-link" href="/urls/<%= url_id = url['url_id']%>"><button type="button" class="btn   btn-outline-primary  mr-1 mb-1">Edit</button></a>
             </td>
             <td>
               <form  method="POST" action="/urls/delete" >
-                <input type="hidden" name="shortURL"  value=<%= url["shortURL"] %>>
+                <input type="hidden" name="shortURL"  value="/urls/:<%=url_id=url.ulr_id  %>/delete">
                 <button type="submit" class="btn  btn-outline-danger mr-1 mb-1">Delete</button>
               </form>
             </td>
@@ -47,6 +46,7 @@
   </main>
 
     <!-- Bootstrap JS -->
+    <!-- #region-->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
       integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
       crossorigin="anonymous"></script>
@@ -56,5 +56,6 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
       integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
       crossorigin="anonymous"></script>
+      <!-- endregion -->
 </body>
 </html>
